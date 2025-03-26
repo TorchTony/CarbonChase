@@ -7,10 +7,10 @@ from math import ceil
 
 class PixelButton:
     def __init__(self, x, y, width, height, text, font, 
-                 normal_color=(200, 200, 200), 
-                 hover_color=(220, 220, 220), 
-                 text_color=(0, 0, 0),
-                 border_color=(100, 100, 100)):
+                 normal_color=(180, 210, 180),  # Light green
+                 hover_color=(200, 230, 200),    # Lighter green
+                 text_color=(20, 40, 20),        # Very dark green
+                 border_color=(50, 100, 50)):    # Dark green
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.font = font
@@ -18,7 +18,7 @@ class PixelButton:
         self.hover_color = hover_color
         self.text_color = text_color
         self.border_color = border_color
-        self.selected_color = (50, 200, 50)
+        self.selected_color = (80, 180, 80)      # Bright green
         self.is_selected = False
         self.is_hover = False
 
@@ -27,9 +27,19 @@ class PixelButton:
             current_color = self.selected_color if self.is_selected else self.hover_color if self.is_hover else self.normal_color
             pygame.draw.rect(surface, current_color, self.rect, border_radius=2)
             pygame.draw.rect(surface, self.border_color, self.rect, 2, border_radius=2)
-            text_surface = self.font.render(self.text, True, self.text_color)
-            text_rect = text_surface.get_rect(center=self.rect.center)
-            surface.blit(text_surface, text_rect)
+            
+            # Split text into lines
+            lines = self.text.split('\n')
+            total_height = len(lines) * self.font.get_height()
+            y_offset = (self.rect.height - total_height) // 2
+            
+            for i, line in enumerate(lines):
+                text_surface = self.font.render(line, True, self.text_color)
+                text_rect = text_surface.get_rect(
+                    centerx=self.rect.centerx,
+                    top=self.rect.top + y_offset + i * self.font.get_height()
+                )
+                surface.blit(text_surface, text_rect)
         except:
             pass
 
@@ -126,23 +136,53 @@ class CarbonChaseGame:
                 self.pixel_font_large = pygame.font.Font("assets/PressStart2P.ttf", 24)
             except:
                 pass
+            
+            # Load background image
+            try:
+                self.background_image = pygame.image.load("assets/background.png").convert()
+                self.background_image = pygame.transform.scale(self.background_image, 
+                                                             (self.screen_width, self.screen_height))
+            except:
+                self.background_image = None
         except:
-            self.handle_critical_error("Font loading failed")
+            self.handle_critical_error("Asset loading failed")
 
+        # Updated color scheme with green shades
         self.COLORS = {
-            'background': (230, 230, 230),
-            'panel': (200, 200, 200),
-            'dark_panel': (150, 150, 150),
-            'border': (80, 80, 80),
-            'text': (20, 20, 20),
-            'warning': (200, 100, 0),
-            'danger': (200, 50, 50),
-            'success': (50, 150, 50),
-            'highlight': (100, 180, 255),
-            'button': (180, 180, 180),
-            'button_hover': (200, 200, 200),
+            'background': (230, 245, 230),
+            'panel': (200, 230, 200),
+            'dark_panel': (100, 160, 100),
+            'border': (50, 100, 50),
+            'text': (20, 40, 20),
+            'warning': (200, 180, 0),
+            'danger': (200, 80, 80),
+            'success': (50, 180, 50),
+            'highlight': (120, 200, 120),
+            'button': (180, 210, 180),
+            'button_hover': (200, 230, 200),
             'button_selected': (80, 180, 80)
         }
+
+        # Load product images and scale them for header display
+        try:
+            self.product_images = {}
+            # Load and scale Pizza image (60x60)
+            self.product_images["Pizza"] = pygame.image.load("assets/Pizza.png").convert_alpha()
+            self.product_images["Pizza"] = pygame.transform.scale(self.product_images["Pizza"], (60, 60))
+            
+            # Load and scale E-Bike image (60x60)
+            self.product_images["E-Bike"] = pygame.image.load("assets/Ebike.png").convert_alpha()
+            self.product_images["E-Bike"] = pygame.transform.scale(self.product_images["E-Bike"], (60, 60))
+            
+            # Load and scale Smartphone image (70x70)
+            self.product_images["Smartphone"] = pygame.image.load("assets/SmartPhone.png").convert_alpha()
+            self.product_images["Smartphone"] = pygame.transform.scale(self.product_images["Smartphone"], (70, 70))
+        except Exception as e:
+            print("Error loading product images:", e)
+
+
+
+
 
     def load_processes(self):
         """Load all production processes with their options - now more affordable and balanced"""
@@ -163,7 +203,7 @@ class CarbonChaseGame:
                         "happiness": 3,
                         "info": "No pesticides but lower yields increase land use"
                     },
-                    "Local Seasonal": {
+                    "Local\nSeasonal": {  # Changed to two lines
                         "cost": 1000, 
                         "emissions": 300, 
                         "efficiency": 4, 
@@ -562,12 +602,15 @@ class CarbonChaseGame:
     def draw_background(self):
         """Draw the game background"""
         try:
-            self.screen.fill(self.COLORS['background'])
-            
-            for x in range(0, self.screen_width, 20):
-                pygame.draw.line(self.screen, (220, 220, 220), (x, 0), (x, self.screen_height), 1)
-            for y in range(0, self.screen_height, 20):
-                pygame.draw.line(self.screen, (220, 220, 220), (0, y), (self.screen_width, y), 1)
+            if self.background_image:
+                self.screen.blit(self.background_image, (0, 0))
+            else:
+                # Fallback to original grid pattern if image failed to load
+                self.screen.fill(self.COLORS['background'])
+                for x in range(0, self.screen_width, 20):
+                    pygame.draw.line(self.screen, (220, 220, 220), (x, 0), (x, self.screen_height), 1)
+                for y in range(0, self.screen_height, 20):
+                    pygame.draw.line(self.screen, (220, 220, 220), (0, y), (self.screen_width, y), 1)
         except:
             self.handle_critical_error("Background drawing failed")
 
@@ -594,8 +637,22 @@ class CarbonChaseGame:
             
             product_text = self.pixel_font_medium.render(f"Product: {self.current_product}", True, self.COLORS['text'])
             self.screen.blit(product_text, (20, 80))
+            
+            # Draw product image in the header (positioned on the right side)
+            # Draw product image in the header (positioned slightly higher)
+            if hasattr(self, 'product_images') and self.current_product in self.product_images:
+                header_height = 100
+                image = self.product_images[self.current_product]
+                image_width, image_height = image.get_size()
+                
+                x_pos = self.screen_width - image_width - 10
+                y_pos = 12  # Shift upwards to avoid Reset Game button
+                
+                self.screen.blit(image, (x_pos, y_pos))
+
         except:
             self.handle_critical_error("Header panel drawing failed")
+
 
     def draw_info_panel(self):
         """Draw the information panel at the bottom"""
@@ -664,76 +721,79 @@ class CarbonChaseGame:
 
         while running:
             try:
+                mouse_pos = pygame.mouse.get_pos()
+                
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         running = False
                     
                     if self.game_state == "playing" and not self.error_occurred:
-                        try:
-                            # Product tab selection
-                            for button in self.product_buttons:
-                                if button.handle_event(event):
-                                    self.current_product = button.text
-                                    self.create_process_buttons()
-                            
-                            # Process option selection - fixed to work in any order
-                            if event.type == pygame.MOUSEBUTTONDOWN:
-                                for i, button in enumerate(self.process_buttons):
-                                    if button.handle_event(event):
-                                        # Find which process this option belongs to
-                                        process_names = list(self.processes[self.current_product].keys())
-                                        process_index = 0
-                                        options_count = 0
-                                        
-                                        # Calculate which process was clicked
-                                        for idx, process in enumerate(process_names):
-                                            options = self.processes[self.current_product][process]
-                                            if i < options_count + 1 + len(options):
-                                                process_index = idx
-                                                break
-                                            options_count += 1 + len(options)
-                                        
-                                        # Skip if clicked on a process title
-                                        if i == options_count:
-                                            continue
-                                        
-                                        process = process_names[process_index]
-                                        option = button.text.split('\n')[0]
-                                        
-                                        self.select_process_option(self.current_product, process, option)
-                                        self.create_process_buttons()
-                            
-                            # Reset button
-                            if self.reset_button.handle_event(event):
-                                self.reset_game()
+                        # Product tab selection
+                        for button in self.product_buttons:
+                            if button.handle_event(event):
+                                self.current_product = button.text
+                                self.create_process_buttons()
                         
-                        except Exception as e:
-                            self.handle_critical_error(f"Input error: {str(e)}")
+                        # Process option selection
+                        if event.type == pygame.MOUSEBUTTONDOWN:
+                            for i, button in enumerate(self.process_buttons):
+                                if button.handle_event(event):
+                                    # Skip process title buttons (they're just labels)
+                                    if button.text in self.processes[self.current_product]:
+                                        continue
+                                    
+                                    # Find which process this option belongs to
+                                    process_index = 0
+                                    options_count = 0
+                                    process_names = list(self.processes[self.current_product].keys())
+                                    
+                                    for idx, process in enumerate(process_names):
+                                        options = self.processes[self.current_product][process]
+                                        if i < options_count + 1 + len(options):
+                                            process_index = idx
+                                            break
+                                        options_count += 1 + len(options)
+                                    
+                                    process = process_names[process_index]
+                                    option = button.text.split('\n')[0]
+                                    
+                                    self.select_process_option(self.current_product, process, option)
+                                    self.create_process_buttons()
+                        
+                        # Reset button
+                        if self.reset_button.handle_event(event):
+                            self.reset_game()
+                    
+                    # Update hover states for all buttons
+                    if self.game_state == "playing":
+                        for button in self.product_buttons:
+                            button.is_hover = button.rect.collidepoint(mouse_pos)
+                        
+                        for button in self.process_buttons:
+                            button.is_hover = button.rect.collidepoint(mouse_pos)
+                        
+                        self.reset_button.is_hover = self.reset_button.rect.collidepoint(mouse_pos)
                 
                 # Drawing
-                try:
-                    self.draw_background()
-                    self.draw_header_panel()
-                    
-                    for button in self.product_buttons:
-                        button.draw(self.screen)
-                    
-                    if self.game_state == "playing":
-                        for button in self.process_buttons:
-                            button.draw(self.screen)
-                        self.reset_button.draw(self.screen)
-                    
-                    self.draw_info_panel()
-                    
-                    if self.game_state == "game_over":
-                        if self.draw_game_over():
-                            continue
-                    
-                    pygame.display.flip()
-                    clock.tick(60)
+                self.draw_background()
+                self.draw_header_panel()
                 
-                except Exception as e:
-                    self.handle_critical_error(f"Drawing error: {str(e)}")
+                for button in self.product_buttons:
+                    button.draw(self.screen)
+                
+                if self.game_state == "playing":
+                    for button in self.process_buttons:
+                        button.draw(self.screen)
+                    self.reset_button.draw(self.screen)
+                
+                self.draw_info_panel()
+                
+                if self.game_state == "game_over":
+                    if self.draw_game_over():
+                        continue
+                
+                pygame.display.flip()
+                clock.tick(60)
             
             except Exception as e:
                 self.handle_critical_error(f"Game loop error: {str(e)}")

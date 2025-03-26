@@ -69,7 +69,7 @@ class MainMenu:
         self.screen.blit(self.play_button_img, (self.button_x, self.button_y))
 
         # Debug: Draw the clickable area rectangle to verify alignment
-        pygame.draw.rect(self.screen, (255, 0, 0), self.play_button, 2)  # Red outline with a width of 2 pixels
+        # pygame.draw.rect(self.screen, (255, 0, 0), self.play_button, 2)  # Red outline with a width of 2 pixels
 
 
 
